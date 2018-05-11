@@ -106,6 +106,22 @@ module T = struct
       ~loc:(sub # location pext_loc)
       ~attrs:(sub # attributes pext_attributes)
 
+  let map_effect_constructor_kind sub = function
+        Peff_decl(ctl, cto) ->
+          Peff_decl (List.map (sub # typ) ctl, (sub # typ) cto)
+      | Peff_rebind li ->
+          Peff_rebind (map_loc sub li)
+
+  let map_effect_constructor sub
+      {peff_name;
+       peff_kind;
+       peff_loc;
+       peff_attributes} =
+    Te.effect_constructor
+      (map_loc sub peff_name)
+      (map_effect_constructor_kind sub peff_kind)
+      ~loc:(sub # location peff_loc)
+      ~attrs:(sub # attributes peff_attributes)
 
 end
 
@@ -183,6 +199,7 @@ module MT = struct
     | Psig_type (rf, l) -> type_ ~loc rf (List.map (sub # type_declaration) l)
     | Psig_typext te -> type_extension ~loc (sub # type_extension te)
     | Psig_exception ed -> exception_ ~loc (sub # extension_constructor ed)
+    | Psig_effect ef -> effect_ ~loc (sub # effect_constructor ef)
     | Psig_module x -> module_ ~loc (sub # module_declaration x)
     | Psig_recmodule l ->
         rec_module ~loc (List.map (sub # module_declaration) l)
@@ -230,6 +247,7 @@ module M = struct
     | Pstr_type (rf, l) -> type_ ~loc rf (List.map (sub # type_declaration) l)
     | Pstr_typext te -> type_extension ~loc (sub # type_extension te)
     | Pstr_exception ed -> exception_ ~loc (sub # extension_constructor ed)
+    | Pstr_effect ef -> effect_ ~loc (sub # effect_constructor ef)
     | Pstr_module x -> module_ ~loc (sub # module_binding x)
     | Pstr_recmodule l -> rec_module ~loc (List.map (sub # module_binding) l)
     | Pstr_modtype x -> modtype ~loc (sub # module_type_declaration x)
@@ -344,6 +362,7 @@ module P = struct
     | Ppat_lazy p -> lazy_ ~loc ~attrs (sub # pat p)
     | Ppat_unpack s -> unpack ~loc ~attrs (map_loc sub s)
     | Ppat_exception p -> exception_ ~loc ~attrs (sub # pat p)
+    | Ppat_effect (p1, p2) -> effect_ ~loc ~attrs (sub # pat p1) (sub # pat p2)
     | Ppat_extension x -> extension ~loc ~attrs (sub # extension x)
     | Ppat_open (l, p) -> open_ ~loc ~attrs (map_loc sub l) (sub # pat p)
 end
@@ -444,6 +463,7 @@ class mapper =
 
     method type_extension = T.map_type_extension this
     method extension_constructor = T.map_extension_constructor this
+    method effect_constructor = T.map_effect_constructor this
 
     method value_description {pval_name; pval_type; pval_prim; pval_loc;
                               pval_attributes} =
@@ -563,6 +583,7 @@ let to_mapper this =
     class_type_declaration = (fun _ -> this # class_type_declaration);
     class_type_field = (fun _ -> this # class_type_field);
     constructor_declaration = (fun _ -> this # constructor_declaration);
+    effect_constructor = (fun _ -> this # effect_constructor);
     expr = (fun _ -> this # expr);
     extension = (fun _ -> this # extension);
     extension_constructor = (fun _ -> this # extension_constructor);

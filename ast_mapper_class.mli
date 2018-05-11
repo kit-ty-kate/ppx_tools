@@ -23,6 +23,7 @@ class mapper:
     method class_type_field: class_type_field -> class_type_field
     method constructor_arguments: constructor_arguments -> constructor_arguments
     method constructor_declaration: constructor_declaration -> constructor_declaration
+    method effect_constructor: effect_constructor -> effect_constructor
     method expr: expression -> expression
     method extension: extension -> extension
     method extension_constructor: extension_constructor -> extension_constructor
